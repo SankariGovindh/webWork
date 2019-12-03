@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:background="@android:color/black"
-        android:elevation="4dp" />
+        android:layout_marginTop="20dp" />
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/pager"
@@ -31,7 +31,7 @@
             app:tabMode="fixed"
             app:tabIndicatorColor="@android:color/darker_gray"
             app:tabTextColor="@android:color/darker_gray"
-            app:tabSelectedTextColor="@android:color/white"/>
+            app:tabSelectedTextColor="@android:color/white" />
 
     </androidx.viewpager.widget.ViewPager>
 

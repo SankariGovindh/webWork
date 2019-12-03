@@ -6,8 +6,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
 import androidx.fragment.app.Fragment;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -22,6 +25,7 @@ public class WeeklyFragment extends Fragment  {
 
     public JSONObject weatherData;
     public LineChart lineChart;
+    public TextView textView;
     Float[] minArray = new Float[8];
     Float[] maxArray = new Float[8];
 
@@ -47,10 +51,60 @@ public class WeeklyFragment extends Fragment  {
         super.onViewCreated(view, savedInstanceState);
 
         lineChart = view.findViewById(R.id.temperatureChart);
+        textView = view.findViewById(R.id.textView);
 
         //storing array data from JSONObject
         try {
+
             JSONObject weekly = weatherData.getJSONObject("daily");
+
+            //storing the values for the card
+            String summary = weekly.getString("summary");
+            String icon = weekly.getString("icon");
+
+            if(icon.equals("clear-day")){
+                textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_sunny, 0, 0, 0);
+            }
+
+            if(icon.equals("clear-night")){
+                textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_night, 0, 0, 0);
+            }
+
+            if(icon.equals("rain")){
+                textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_rainy, 0, 0, 0);
+            }
+
+            if(icon.equals("sleet")){
+                textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_snowy_rainy, 0, 0, 0);
+            }
+
+            if(icon.equals("snow")){
+                textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_snowy, 0, 0, 0);
+            }
+
+            if(icon.equals("wind")){
+                textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_windy_variant, 0, 0, 0);
+            }
+
+            if(icon.equals("fog")){
+                textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_fog, 0, 0, 0);
+            }
+
+            if(icon.equals("cloudy")){
+                textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_cloudy, 0, 0, 0);
+            }
+
+            if(icon.equals("partly-cloudy-night")){
+                textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_night_partly_cloudy, 0, 0, 0);
+            }
+
+            if(icon.equals("partly-cloudy-day")){
+                textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_partly_cloudy, 0, 0, 0);
+            }
+
+            textView.setText(summary);
+
+
             JSONArray daily = weekly.getJSONArray("data");
             for (int i = 0; i < daily.length(); i++) {
                 JSONObject current = daily.getJSONObject(i);
@@ -74,27 +128,35 @@ public class WeeklyFragment extends Fragment  {
         for(int i=0; i< minArray.length; i++){
 
             Log.d("in for loop-entry points:",String.valueOf(minArray.length));
-            Log.d("value of minarray:",minArray[i].toString());
+            Log.d("value of min array:",minArray[i].toString());
             minTemperature.add(new Entry(i,minArray[i]));
             maxTemperature.add(new Entry(i,maxArray[i]));
 
         }//end of for loop
 
 
-        ArrayList<ILineDataSet> lineDataSets = new ArrayList<>();
+        ArrayList<ILineDataSet> lineDataSets = new ArrayList<>(); //array to hold the value for the chart
 
-        LineDataSet lineDataSet1 = new LineDataSet(maxTemperature,"maxTemperature");
-        lineDataSet1.setColor(Color.YELLOW);
+        LineDataSet lineDataSet2 = new LineDataSet(maxTemperature,"Maximum Temperature");
+        lineDataSet2.setColor(Color.YELLOW);
 
-        LineDataSet lineDataSet2 = new LineDataSet(minTemperature,"minTemperature");
-        lineDataSet2.setColor(Color.BLUE);
+        LineDataSet lineDataSet1 = new LineDataSet(minTemperature,"Minimum Temperature");
+        lineDataSet1.setColor(Color.BLUE);
 
         lineDataSets.add(lineDataSet1);
         lineDataSets.add(lineDataSet2);
 
         lineChart.setData(new LineData(lineDataSets)); //assigning the data to the actual chart
-        lineChart.setVisibleXRangeMaximum(65f); //viewPort*/
+        lineChart.getXAxis().setTextColor(0xffffffff);
+        lineChart.getXAxis().setDrawGridLines(false);
+        lineChart.getAxisLeft().setTextColor(0xffffffff);
+        lineChart.getAxisRight().setTextColor(0xffffffff);
 
+        //customizing the legend values
+        Legend legend = lineChart.getLegend();
+        legend.setEnabled(true);
+        legend.setTextColor(0xffffffff);
+        legend.setTextSize(14);
 
     }//end of onViewCreated
 

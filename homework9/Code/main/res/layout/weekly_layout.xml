@@ -1,14 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id = "@+id/linear_layout"
-    android:orientation="vertical" android:layout_width="match_parent"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/linear_layout"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/summaryCard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:contentPadding="20dp"
+        app:cardBackgroundColor="#DF1F1D1D"
+        app:cardCornerRadius="10dp"
+        android:layout_marginLeft="17dp"
+        android:layout_marginTop="25dp">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="339dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:drawableLeft="@drawable/weather_sunny"
+            android:padding="10dip"
+            android:textColor="@android:color/white"
+            android:textSize="25sp">
+
+        </TextView>
+
+    </androidx.cardview.widget.CardView>
 
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/temperatureChart"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="559dp"
+        android:paddingStart="20dp"
+        android:layout_marginTop="207dp">
+
     </com.github.mikephil.charting.charts.LineChart>
 
 
-</LinearLayout>
+</RelativeLayout>

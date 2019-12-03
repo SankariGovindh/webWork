@@ -39,7 +39,7 @@ public class recycleViewAdapter extends RecyclerView.Adapter<recycleViewAdapter.
         String imageUrl = currentItem.getImageUrl();
 
         //using Picasso to pull the image from the internet
-        Picasso.with(context).load(imageUrl).fit().centerInside().into(holder.imageView);
+        Picasso.with(context).load(imageUrl).fit().into(holder.imageView);
     }
 
     @Override

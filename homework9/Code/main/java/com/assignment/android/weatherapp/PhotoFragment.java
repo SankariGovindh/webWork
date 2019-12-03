@@ -44,11 +44,9 @@ public class PhotoFragment extends Fragment {
 
         //calling the google image API to fetch image
         final RequestQueue queue = Volley.newRequestQueue(getActivity().getApplicationContext());
-        String url = "https://www.googleapis.com/customsearch/v1?q=Los%20Angeles&cx=000066031221280904308:1qngeof0co6&imgSize=large&imgType=news&searchType=image&key=AIzaSyCH2oPI34OIf0_qlzyL9zTIMfBUxEgZur4";
+        String url = "http://10.0.2.2:8081/cityPic?city="+location;
         final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,url,null,new Response.Listener<JSONObject>() {
             public void onResponse(JSONObject response) {
-                textView.setText(response.toString());
-                Log.d("response logging",response.toString());
 
                 try{
                     //parsing the data from the JSON
@@ -92,8 +90,6 @@ public class PhotoFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState)
     {
         super.onViewCreated(view, savedInstanceState);
-        textView = view.findViewById(R.id.textView);
-        textView.setText("Fragment Photo");
 
         //creating reference for the recycler view
         mRecyclerView = view.findViewById(R.id.recycler_view);

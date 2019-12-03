@@ -4,4 +4,8 @@
     <color name="colorPrimaryDark">@android:color/black</color>
     <color name="colorAccent">@android:color/white</color>
     <color name="textColor">@android:color/white</color>
+    <color name="tabSelectedIconColor">@android:color/white</color>
+    <color name="tabUnselectedIconColor">@android:color/darker_gray</color>
+    <color name="yellow">#ffff00</color>
+    <color name="purple">#813EA6</color>
 </resources>

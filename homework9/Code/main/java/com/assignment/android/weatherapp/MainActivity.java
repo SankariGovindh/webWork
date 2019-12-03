@@ -1,42 +1,32 @@
 package com.assignment.android.weatherapp;
 
 import java.lang.*;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
-
 import android.Manifest;
-import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.MenuItemCompat;
+import androidx.fragment.app.Fragment;
+import androidx.viewpager.widget.ViewPager;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -44,19 +34,29 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 
 public class MainActivity extends AppCompatActivity {
 
+    private ViewPager firstViewPager;
+    private TabLayout mTabLayout;
+    private FavPageAdapter dotAdapter;
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        final RequestQueue queue = Volley.newRequestQueue(this);
         setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mTabLayout = findViewById(R.id.tab_layout);
+        firstViewPager = findViewById(R.id.view_pager);
+        dotAdapter = new FavPageAdapter(getSupportFragmentManager()); //instantiating the dotAdapter
+
         requestPermission();
 
         //setting the toolbar for the app
@@ -65,243 +65,59 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setTitle("WeatherApp");
         weatherAppToolBar.setTitleTextColor(0xFFFFFFFF);
 
-        //textView declaration of card1
-        final TextView textView = findViewById(R.id.temperature); //temperature + icon
-        final TextView degree = findViewById(R.id.degree); //degree sign
-        final TextView symbol = findViewById(R.id.symbol); //fahrenheit symbol
-        final TextView info = findViewById(R.id.summary); //summary of the weather
-        final TextView location = findViewById(R.id.location); //location details + information icon
-        final RequestQueue queue = Volley.newRequestQueue(this);
-
-        //textView declaration of card2
-        final TextView humidView = findViewById(R.id.humidity);
-        final TextView windView = findViewById(R.id.wind);
-        final TextView visibleView = findViewById(R.id.visibility);
-        final TextView pressureView = findViewById(R.id.pressure);
-
-        final String currentDate[] = new String[8] ;
-        final Integer iconId[] = new Integer[8];
-        final String minTemperature[] = new String[8];
-        final String maxTemperature[] = new String[8];
-        final ListView listView = findViewById(R.id.weekly_table);
-        final CustomListAdapter weeklyList = new CustomListAdapter(this,currentDate,iconId, minTemperature,maxTemperature);
-
         //call IP-API to get the current location and store the JSON
         String url = "http://ip-api.com/json";
         final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>()
         {
             public void onResponse(JSONObject response) {
-
+            Log.d("before try ip-api",response.toString());
                 try{
-                    final String json_lat = response.getString("lat");
-                    final String json_lon = response.getString("lon");
 
-                    //storing values to display in the end of the card1
-                    final String country = response.getString("countryCode");
                     final String city = response.getString("city");
-                    final String state = response.getString("region");
+                    String state = response.getString("region");
+                    String country = response.getString("countryCode");
 
-                    //code block to make backend call to fetch weather data
-                    String url_weather = "http://nodeapp571.us-west-1.elasticbeanstalk.com/currentLocationCall?latitude="+json_lat+"&longitude="+json_lon;
-                    Log.d("url:",url_weather);
-                    final JsonObjectRequest weatherJSON = new JsonObjectRequest(Request.Method.GET, url_weather, null, new Response.Listener<JSONObject>()
-                    {
-                        public void onResponse(JSONObject response) {
+                    //instantiating the default summary fragment
+                    dotAdapter.addFragment(new summaryFragment(city,state,country),"DEFAULT");
+                    firstViewPager.setOffscreenPageLimit(1); //# of fragments to be loaded into the memory
+                    firstViewPager.setAdapter(dotAdapter); //linking the viewPager and the FavPageAdapter
+                    firstViewPager.setCurrentItem(0); //setting the current item to be on top of the stack
+                    mTabLayout.setupWithViewPager(firstViewPager, true); //linking the viewPager and the tab layout
 
-                            Log.d("outside the try block:","hello");
+                    //adding functionality for removing favorite
+                    final FloatingActionButton fab = findViewById(R.id.fab);
+                    fab.setOnClickListener(new View.OnClickListener() {
 
-                            try{
-                                Log.d("outside for loop:","hello");
+                           String message = "The city is removed from favorites";
 
-                                //storing values for card 1
-                                JSONObject tempVar = response.getJSONObject("currently");
-                                String icon = tempVar.getString("icon");
-                                Float tempValue = Float.parseFloat(tempVar.getString("temperature"));
-                                String temperature = String.valueOf(Math.round(tempValue));
-                                String summary = tempVar.getString("summary");
+                           @Override
+                           public void onClick(View view) {
 
-                                //storing values for card 2
-                                String humidity = String.valueOf(Math.round(Float.parseFloat(tempVar.getString("humidity"))*100));
-                                String wind = tempVar.getString("windSpeed");
-                                String visibility = tempVar.getString("visibility");
-                                String pressure = tempVar.getString("pressure");
+                                 //removing the fragment from the view
+                                 int position = firstViewPager.getCurrentItem();
+                                 Log.d("position value when removed:",String.valueOf(position));
+                                 dotAdapter.removeFragment(position);
+                                 dotAdapter.notifyDataSetChanged();
 
-                                if(icon.equals("clear-day")){
-                                    textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_sunny, 0, 0, 0);
-                                }
-
-                                if(icon.equals("clear-night")){
-                                    textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_night, 0, 0, 0);
-                                }
-
-                                if(icon.equals("rain")){
-                                    textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_rainy, 0, 0, 0);
-                                }
-
-                                if(icon.equals("sleet")){
-                                    textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_snowy_rainy, 0, 0, 0);
-                                }
-
-                                if(icon.equals("snow")){
-                                    textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_snowy, 0, 0, 0);
-                                }
-
-                                if(icon.equals("wind")){
-                                    textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_windy_variant, 0, 0, 0);
-                                }
-
-                                if(icon.equals("fog")){
-                                    textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_fog, 0, 0, 0);
-                                }
-
-                                if(icon.equals("cloudy")){
-                                    textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_cloudy, 0, 0, 0);
-                                }
-
-                                if(icon.equals("partly-cloudy-night")){
-                                    textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_night_partly_cloudy, 0, 0, 0);
-                                }
-
-                                if(icon.equals("partly-cloudy-day")){
-                                    textView.setCompoundDrawablesWithIntrinsicBounds( R.drawable.weather_partly_cloudy, 0, 0, 0);
-                                }
-
-                                //storing values for card 3
-                                JSONObject weekly = response.getJSONObject("daily");
-                                JSONArray daily = weekly.getJSONArray("data");
-
-                                Log.d("outside for loop:",String.valueOf(daily.length()));
-
-                                for(int i=0;i<daily.length();i++){
-
-                                    JSONObject current = daily.getJSONObject(i);
-
-                                    //storing date value by converting the string value
-                                    Date tempDate = new Date(Long.parseLong(current.getString("time")));
-                                    currentDate[i] = (String.valueOf(tempDate));
-
-                                    //storing resource ID of the drawable image
-                                    String drawableName = "";
-                                    //Resources r = getResources();
-                                    Log.d("in on response:",drawableName);
-                                    if(current.getString("icon").equals("clear-day")){
-                                        drawableName = "weather_sunny";
-                                    }
-
-                                    if(current.getString("icon").equals("clear-night")){
-                                        drawableName = "weather_night";
-                                    }
-
-                                    if(current.getString("icon").equals("rain")){
-                                        drawableName = "weather_rainy";
-                                    }
-
-                                    if(current.getString("icon").equals("sleet")){
-                                        drawableName = "weather_snowy_rainy";
-                                    }
-
-                                    if(current.getString("icon").equals("snow")){
-                                        drawableName = "weather_snowy";
-                                    }
-
-                                    if(current.getString("icon").equals("wind")){
-                                        drawableName = "weather_windy_variant";
-                                    }
-
-                                    if(current.getString("icon").equals("fog")){
-                                        drawableName = "weather_fog";
-                                    }
-
-                                    if(current.getString("icon").equals("cloudy")){
-                                        drawableName = "weather_cloudy";
-                                    }
-
-                                    if(current.getString("icon").equals("partly-cloudy-night")){
-                                        drawableName = "weather_night_partly_cloudy";
-
-                                    }
-
-                                    if(current.getString("icon").equals("partly-cloudy-day")){
-                                        drawableName = "weather_partly_cloudy";
-                                    }
-
-                                    //icon ID store
-
-                                    int drawableId = getResId(drawableName, R.drawable.class);
-                                    Log.d("resource id:",String.valueOf(drawableId));
-                                    iconId[i] = drawableId;
-
-                                    //storing minimum and maximum temperatures rounded off to two places
-                                    Float tempMin = Float.parseFloat(current.getString("temperatureLow"));
-                                    minTemperature[i] = (String.valueOf(Math.round(tempMin)));
-
-                                    Float tempMax = Float.parseFloat(current.getString("temperatureHigh"));
-                                    maxTemperature[i] = (String.valueOf(Math.round(tempMax)));
-
-
-                                }//end of for loop
-
-                                for(int i=0;i<iconId.length;i++){
-                                    Log.d("icon ID values:",iconId[i].toString());
-                                }
-
-                                Log.d("setting list:",weeklyList.toString());
-                                listView.setAdapter(weeklyList);
-                                textView.setText(temperature);
-                                degree.setText("o");
-                                symbol.setText("F");
-                                info.setText(summary);
-                                humidView.setText(humidity+"%");
-                                windView.setText(wind+" mph");
-                                visibleView.setText(visibility+" km");
-                                pressureView.setText(pressure+" mb");
-
-
-                            }//end of try
-
-                            catch(JSONException e){
-                                //TODO:handle error
-                            }//end of catch
-
-                        }//end of onResponse
-                    }, new Response.ErrorListener() {
-                       public void onErrorResponse(VolleyError error) {
-                            textView.setText("error:"+error);
-                        }
+                               //displaying the toast message
+                                 Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                           }//end of onClick
                     });
+                   /*Fragment summary=new summaryFragment(city,state,country);
+                   getSupportFragmentManager().beginTransaction().replace(R.id.fragment_frame, summary, summary.getClass().getSimpleName()).addToBackStack(null).commit();*/
 
-                        location.setText(city+","+state+","+country);
-                        Drawable img = ResourcesCompat.getDrawable(getResources(),R.drawable.information_outline,null);
-                        img.setBounds(0,0,60,60);
-                        location.setCompoundDrawables(null, null, img, null );
-
-                        CardView cardView = findViewById(R.id.card1);
-                        cardView.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Intent intent = new Intent(MainActivity.this, DetailedWeatherActivity.class);
-                                intent.putExtra("CITY",city);
-                                Log.d("put city done",city);
-                                intent.putExtra("STATE",state);
-                                intent.putExtra("LATITUDE",json_lat);
-                                intent.putExtra("LONGITUDE",json_lon);
-                                startActivity(intent);
-                            }
-                        });
-
-                        queue.add(weatherJSON);
-                }//end of outer try block
+                }//end of try block
 
                 catch(JSONException e){
-                    //handle error
-                    textView.setText(e.toString());
-                }
-            }
+                    //TODO:handle error
+                }//end of catch block
+            }//end of onResponse
         }, new Response.ErrorListener() {
             public void onErrorResponse(VolleyError error) {
-                // TODO: Handle error
+                //TODO
             }
         });
+
         queue.add(jsonObjectRequest);
 
     }//end of onCreate method
@@ -313,22 +129,65 @@ public class MainActivity extends AppCompatActivity {
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         SearchView searchView = (SearchView) menu.findItem(R.id.search_place).getActionView();
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setQueryHint("Search...");
+        int searchPlateId = searchView.getContext().getResources().getIdentifier("android:id/search_plate",null,null);
+        View searchPlate = searchView.findViewById(searchPlateId);
+        if(searchPlate != null){
+            searchPlate.setBackgroundColor(Color.DKGRAY);
+            int searchTextId = searchPlate.getContext().getResources().getIdentifier("Search...", null, null);
+            TextView searchText = searchPlate.findViewById(searchTextId);
+            if (searchText!=null) {
+                searchText.setTextColor(Color.WHITE);
+                searchText.setHintTextColor(Color.DKGRAY);
+            }
+        }//end of outer if
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+              @Override
+              public boolean onQueryTextSubmit(String query) {
+                  //calling the Searchable activity
+                  Intent intent = new Intent(getApplicationContext(), Searchable.class);
+                  intent.putExtra("ADDRESS",query);
+                  startActivity(intent);
+                  return true;
+              }//end of onQueryTextSubmit
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+
         return true;
-    }//searchView
+    }//end of onCreateOptionsMenu
 
-    //main activity loses focus and the search gains the focus
     @Override
-    public boolean onSearchRequested() {
+    public void onResume(){
 
-        //reading the input from the user
 
-        //code the autocomplete logic
-        return super.onSearchRequested();
+        //if city not in the favorites list then add the fragment
 
-        //setOnDismissListener()
-        //setOnCancelListener()
+        final String PERSIST_FAVORITES = "favoriteLists";
+        SharedPreferences sp = getSharedPreferences(PERSIST_FAVORITES,MODE_PRIVATE);
+        //on clicking the back button in the searchable, read the values from the sharedPreference and add an additional fragment
+        Set<String> citySet = sp.getStringSet("city",null);
 
-    }//end of onSearchRequested
+        for(String city: citySet){
+
+                Fragment fragment = getSupportFragmentManager().findFragmentByTag(city);
+                if(fragment == null){
+                    Log.d("printing the city in the set:",city);
+                    dotAdapter.addFragment(new summaryFragment(city),city);
+                    dotAdapter.notifyDataSetChanged();
+                }
+
+        }//end of for loop
+
+        super.onResume();
+
+    }//end of onResume
+
+    //onActivityResult() callback to pull the data sent from the searchable activity
 
     protected void requestPermission(){
 
@@ -349,16 +208,4 @@ public class MainActivity extends AppCompatActivity {
         }//code block for enabling the permission
 
     }//end of requestPermission
-
-    public static int getResId(String resName, Class<?> c) {
-
-        try {
-            Log.d("from getResId:",resName);
-            Field idField = c.getDeclaredField(resName);
-            return idField.getInt(idField);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return -1;
-        }
-    }//end of getResId
 }
